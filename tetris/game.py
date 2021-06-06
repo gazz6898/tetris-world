@@ -28,10 +28,16 @@ class TetrisGame:
         self.can_rotate_l = True
         self.can_rotate_r = True
 
+        self.score = 0
+
+        self.attacking = False
+        self.attack = 0
+
         self.FPS = FPS
 
         self.drop_frames = FPS
         self.lock_frames = LOCK_IN_FRAMES
+        self.lock_resets = 0
         self.shift_frames = 0
         self.delay_auto_shift = True
 
@@ -45,12 +51,15 @@ class TetrisGame:
     def _debug_str(self) -> str:
         return "\n".join([
             "Game Over:" + str(self.game_over),
+            "Lock Resets: " + str(self.lock_resets),
             "Lock Frames: " + str(self.lock_frames),
             "Locking In: " + str(self.locking_in),
             "Drop Frames: " + str(self.drop_frames),
             "Shift Frames: " + str(self.shift_frames),
             "Delay Auto Shift: " + str(self.delay_auto_shift),
-            "Current Position:" + str(self.current_position)
+            "Current Position:" + str(self.current_position),
+            "Attack:" + str(self.attack),
+            "Score:" + str(self.score)
         ])
 
     def redraw(self):
@@ -104,6 +113,7 @@ class TetrisGame:
             self.view.draw_queue(self.queue)
 
         self.locking_in = False
+        self.lock_resets = 0
         self.lock_frames = LOCK_IN_FRAMES
 
         if self.field.test_shape_fit(self.get_current_shape()):
@@ -128,6 +138,7 @@ class TetrisGame:
     def hold_piece(self):
         if self.queue.can_hold_piece:
             self.locking_in = False
+            self.lock_resets = 0
             self.lock_frames = LOCK_IN_FRAMES
             next_piece = self.queue.held_piece if self.queue.held_piece is not None else self.queue.next_piece()
             self.queue.held_piece = self.current_piece
@@ -194,8 +205,15 @@ class TetrisGame:
 
             self.locking_in = False
             self.lock_frames = LOCK_IN_FRAMES
+            self.lock_resets = 0
 
-            self.field.clear_rows()
+            cleared = self.field.clear_rows()
+
+            self.score += [0, 40, 100, 300, 1200][cleared]
+
+            self.attacking = bool(cleared)
+            self.attack += [0, 0, 1, 2, 4][cleared]
+
             self.spawn_piece()
         except IndexError:
             self.end_game()
@@ -214,7 +232,7 @@ class TetrisGame:
             return True
         elif not self.locking_in:
             self.locking_in = True
-            self.lock_frames = LOCK_IN_FRAMES
+            self.lock_frames = LOCK_IN_FRAMES if self.lock_resets < 12 or self.lock_frames == 0 else self.lock_frames
             return False
         else:
             self.lock_in_piece()
@@ -242,6 +260,7 @@ class TetrisGame:
                 self.current_position[1]
             )
             self.draw_current_piece()
+            self.lock_resets += 1 if self.locking_in else 0
             self.locking_in = False
 
     def auto_shift_piece(self, direction: -1 | 1) -> bool:
@@ -271,7 +290,8 @@ class TetrisGame:
 
             for (kx, ky) in kick_table[self.current_orientation]:
                 if self.field.test_shape_fit(self.get_offset_shape((kx, ky), 1)):
-                    self.locking_in = False
+                    self.lock_resets += 1 if self.locking_in else 0
+                    self.locking_in = self.lock_resets >= 12
                     self.erase_current_piece()
 
                     self.current_position = (x + kx, y + ky)
@@ -292,7 +312,8 @@ class TetrisGame:
 
             for (kx, ky) in kick_table[(self.current_orientation-1) % 4]:
                 if self.field.test_shape_fit(self.get_offset_shape((-kx, -ky), -1)):
-                    self.locking_in = False
+                    self.lock_resets += 1 if self.locking_in else 0
+                    self.locking_in = self.lock_resets >= 12
                     self.erase_current_piece()
 
                     self.current_position = (x - kx, y - ky)

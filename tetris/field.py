@@ -40,7 +40,7 @@ class TetrisField:
         dy = self.get_drop_distance(shape)
         return [(x, y - dy) for (x, y) in shape]
 
-    def clear_rows(self):
+    def clear_rows(self) -> int:
         cleared = []
         for row in range(TETRIS_FIELD_ROWS):
             col = 0
@@ -51,9 +51,12 @@ class TetrisField:
             if col == TETRIS_FIELD_COLS:
                 cleared.append(row)
 
+        lines_cleared = len(cleared)
         for row in reversed(cleared):
             self.cells.pop(row)
             self.cells.append([None] * TETRIS_FIELD_COLS)
+
+        return lines_cleared
 
     def prepend_rows(self, rows: List[List[int]]):
         for row in reversed(rows):

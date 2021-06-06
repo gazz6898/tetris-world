@@ -14,4 +14,6 @@ class TetrisPlayer:
         for action in TetrisAction:
             actions[action] = False
 
+        actions[TetrisAction.DROP_SOFT] = True
+
         return actions
