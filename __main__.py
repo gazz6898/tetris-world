@@ -14,6 +14,27 @@ from tetris.players.random import RandomPlayer
 
 from global_constants import *
 
+"""
+
+ - (Start Tetris Game)
+   |
+   `-> Generate a dataset from current game
+       |
+       `-> | Current Cells (from the field)
+           | Current Piece/Position/Orientation
+           | Current Pieces in Queue
+           |
+           `-> Feed into NN as input
+               |
+               `-> NN spits out Actions Dictionary (yes/no for each TetrisAction)
+                   |
+                   `-> New game state -.
+                                        '
+                 (repeat until loss)  <-'
+
+"""
+
+
 pygame.init()
 
 tetris_game = TetrisGame(position=(TILE_SIZE, 0), FPS=FPS)
