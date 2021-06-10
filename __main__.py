@@ -11,32 +11,18 @@ from tetris.actions import TetrisAction
 from tetris.constants import *
 from tetris.game import TetrisGame
 from tetris.players.random import RandomPlayer
+from tetris.players.spin import SpinPlayer
+from tetris.players.left import LeftPlayer
+from tetris.players.shift import ShiftPlayer
+from tetris.players.soft import SoftPlayer
+from tetris.players.hard import HardPlayer
+from tetris.players.hold import HoldPlayer
 
 from global_constants import *
 
-"""
-
- - (Start Tetris Game)
-   |
-   `-> Generate a dataset from current game
-       |
-       `-> | Current Cells (from the field)
-           | Current Piece/Position/Orientation
-           | Current Pieces in Queue
-           |
-           `-> Feed into NN as input
-               |
-               `-> NN spits out Actions Dictionary (yes/no for each TetrisAction)
-                   |
-                   `-> New game state -.
-                                        '
-                 (repeat until loss)  <-'
-
-"""
-
 
 pygame.init()
-
+#Currently configured for AI players on both sides. 
 tetris_game = TetrisGame(position=(TILE_SIZE, 0), FPS=FPS)
 keymap = {
     TetrisAction.SHIFT_L: K_LEFT,
@@ -47,9 +33,10 @@ keymap = {
     TetrisAction.DROP_HARD: K_SPACE,
     TetrisAction.HOLD: K_c
 }
+player_1 = ShiftPlayer(tetris_game)
 
 tetris_game_2 = TetrisGame(position=(32 * TILE_SIZE, 0), FPS=FPS)
-player_2 = RandomPlayer(tetris_game_2)
+player_2 = HoldPlayer(tetris_game_2)
 
 
 def main() -> None:
@@ -85,7 +72,7 @@ def main() -> None:
             for action in TetrisAction:
                 actions[action] = bool(pressed_keys[keymap[action]])
 
-            tetris_game.execute_actions(actions)
+            tetris_game.execute_actions(player_1.decide())
             tetris_game.update()
 
             if tetris_game.attack and not tetris_game.attacking:
